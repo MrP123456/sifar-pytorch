@@ -23,13 +23,13 @@ from timm.scheduler import create_scheduler
 from timm.optim import create_optimizer
 from timm.utils import NativeScaler, get_state_dict, ModelEma
 
-#from datasets import build_dataset
+# from datasets import build_dataset
 from engine import train_one_epoch, evaluate
 from samplers import RASampler
 import models
 import my_models
 import torch.nn as nn
-#import simclr
+# import simclr
 import utils
 from losses import DeepMutualLoss, ONELoss, MulMixturelLoss, SelfDistillationLoss
 
@@ -38,7 +38,9 @@ from video_dataset_aug import get_augmentor, build_dataflow
 from video_dataset_config import get_dataset_config, DATASET_CONFIG
 
 warnings.filterwarnings("ignore", category=UserWarning)
-#torch.multiprocessing.set_start_method('spawn', force=True)
+
+
+# torch.multiprocessing.set_start_method('spawn', force=True)
 
 def get_args_parser():
     parser = argparse.ArgumentParser('DeiT training and evaluation script', add_help=False)
@@ -73,8 +75,9 @@ def get_args_parser():
 
     # temporal module
     parser.add_argument('--pretrained', action='store_true', default=False,
-                    help='Start with pretrained version of specified network (if avail)')
-    parser.add_argument('--temporal_module_name', default=None, type=str, metavar='TEM', choices=['ResNet3d', 'TAM', 'TTAM', 'TSM', 'TTSM', 'MSA'],
+                        help='Start with pretrained version of specified network (if avail)')
+    parser.add_argument('--temporal_module_name', default=None, type=str, metavar='TEM',
+                        choices=['ResNet3d', 'TAM', 'TTAM', 'TSM', 'TTSM', 'MSA'],
                         help='temporal module applied. [TAM]')
     parser.add_argument('--temporal_attention_only', action='store_true', default=False,
                         help='use attention only in temporal module]')
@@ -96,7 +99,7 @@ def get_args_parser():
     # Model parameters
     parser.add_argument('--model', default='deit_base_patch16_224', type=str, metavar='MODEL',
                         help='Name of model to train')
-#    parser.add_argument('--input-size', default=224, type=int, help='images input size')
+    #    parser.add_argument('--input-size', default=224, type=int, help='images input size')
 
     parser.add_argument('--drop', type=float, default=0.0, metavar='PCT',
                         help='Dropout rate (default: 0.)')
@@ -190,13 +193,13 @@ def get_args_parser():
                         help='How to apply mixup/cutmix params. Per "batch", "pair", or "elem"')
 
     # Dataset parameters
-#    parser.add_argument('--data-path', default=os.path.join(os.path.expanduser("~"), 'datasets/image_cls/imagenet1k/'), type=str,
-#                        help='dataset path')
-#    parser.add_argument('--data-set', default='IMNET', choices=['CIFAR10', 'CIFAR100', 'IMNET', 'INAT', 'INAT19', 'IMNET21K', 'Flowers102', 'StanfordCars', 'iNaturalist2019', 'Caltech101'],
-#                        type=str, help='Image Net dataset path')
-#    parser.add_argument('--inat-category', default='name',
-#                        choices=['kingdom', 'phylum', 'class', 'order', 'supercategory', 'family', 'genus', 'name'],
-#                        type=str, help='semantic granularity')
+    #    parser.add_argument('--data-path', default=os.path.join(os.path.expanduser("~"), 'datasets/image_cls/imagenet1k/'), type=str,
+    #                        help='dataset path')
+    #    parser.add_argument('--data-set', default='IMNET', choices=['CIFAR10', 'CIFAR100', 'IMNET', 'INAT', 'INAT19', 'IMNET21K', 'Flowers102', 'StanfordCars', 'iNaturalist2019', 'Caltech101'],
+    #                        type=str, help='Image Net dataset path')
+    #    parser.add_argument('--inat-category', default='name',
+    #                        choices=['kingdom', 'phylum', 'class', 'order', 'supercategory', 'family', 'genus', 'name'],
+    #                        type=str, help='semantic granularity')
 
     parser.add_argument('--output_dir', default='',
                         help='path where to save, empty for no saving')
@@ -227,11 +230,11 @@ def get_args_parser():
     parser.add_argument("--local_rank", type=int)
     parser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
 
-
     parser.add_argument('--auto-resume', action='store_true', help='auto resume')
     # exp
     parser.add_argument('--simclr_w', type=float, default=0., help='weights for simclr loss')
-    parser.add_argument('--contrastive_nomixup', action='store_true', help='do not involve mixup in contrastive learning')
+    parser.add_argument('--contrastive_nomixup', action='store_true',
+                        help='do not involve mixup in contrastive learning')
     parser.add_argument('--temperature', type=float, default=0.07, help='temperature of NCE')
     parser.add_argument('--branch_div_w', type=float, default=0., help='add branch divergence in the loss')
     parser.add_argument('--simsiam_w', type=float, default=0., help='weights for simsiam loss')
@@ -258,7 +261,7 @@ def main(args):
     if not hasattr(args, 'selfdis_w'):
         args.selfdis_w = 0.0
 
-    #is_imnet21k = args.data_set == 'IMNET21K'
+    # is_imnet21k = args.data_set == 'IMNET21K'
 
     device = torch.device(args.device)
 
@@ -279,8 +282,8 @@ def main(args):
     elif args.modality == 'flow':
         args.input_channels = 2 * 5
 
-#    mean = IMAGENET_DEFAULT_MEAN
-#    std = IMAGENET_DEFAULT_STD
+    #    mean = IMAGENET_DEFAULT_MEAN
+    #    std = IMAGENET_DEFAULT_STD
 
     mixup_fn = None
     mixup_active = args.mixup > 0 or args.cutmix > 0. or args.cutmix_minmax is not None
@@ -294,18 +297,18 @@ def main(args):
     model = create_model(
         args.model,
         pretrained=args.pretrained,
-        duration=args.duration,
-        hpe_to_token = args.hpe_to_token,
-        rel_pos = args.rel_pos,
-        window_size=args.window_size,
-        super_img_rows = args.super_img_rows,
-        token_mask=not args.no_token_mask,
-        online_learning = args.one_w >0.0 or args.dml_w >0.0,
+        # duration=args.duration,
+        # hpe_to_token = args.hpe_to_token,
+        # rel_pos = args.rel_pos,
+        # window_size=args.window_size,
+        # super_img_rows = args.super_img_rows,
+        # token_mask=not args.no_token_mask,
+        # online_learning = args.one_w >0.0 or args.dml_w >0.0,
         num_classes=args.num_classes,
         drop_rate=args.drop,
         drop_path_rate=args.drop_path,
         drop_block_rate=args.drop_block,
-        use_checkpoint=args.use_checkpoint
+        # use_checkpoint=args.use_checkpoint
     )
 
     # TODO: finetuning
@@ -323,17 +326,17 @@ def main(args):
 
     model_without_ddp = model
     if args.distributed:
-        #model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu], find_unused_parameters=True)
+        # model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu], find_unused_parameters=True)
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
         model_without_ddp = model.module
     n_parameters = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print('number of params:', n_parameters)
 
-    #linear_scaled_lr = args.lr * args.batch_size * utils.get_world_size() / 512.0
-    #args.lr = linear_scaled_lr
+    # linear_scaled_lr = args.lr * args.batch_size * utils.get_world_size() / 512.0
+    # args.lr = linear_scaled_lr
     optimizer = create_optimizer(args, model)
     loss_scaler = NativeScaler()
-    #print(f"Scaled learning rate (batch size: {args.batch_size * utils.get_world_size()}): {linear_scaled_lr}")
+    # print(f"Scaled learning rate (batch size: {args.batch_size * utils.get_world_size()}): {linear_scaled_lr}")
     lr_scheduler, _ = create_scheduler(args, optimizer)
 
     criterion = LabelSmoothingCrossEntropy()
@@ -344,7 +347,7 @@ def main(args):
     elif args.smoothing:
         criterion = LabelSmoothingCrossEntropy(smoothing=args.smoothing)
     else:
-        criterion = torch.nn.CrossEntropyLoss() 
+        criterion = torch.nn.CrossEntropyLoss()
 
     if args.dml_w > 0.:
         criterion = DeepMutualLoss(criterion, args.dml_w, args.kd_temp)
@@ -393,8 +396,9 @@ def main(args):
                 utils._load_checkpoint_for_ema(model_ema, checkpoint['model_ema'])
             max_accuracy = checkpoint['max_accuracy']
 
-    mean = (0.5, 0.5, 0.5) if 'mean' not in model.module.default_cfg else model.module.default_cfg['mean']
-    std = (0.5, 0.5, 0.5) if 'std' not in model.module.default_cfg else model.module.default_cfg['std']
+    mean, std = (0.5, 0.5, 0.5), (0.5, 0.5, 0.5)
+    # mean = (0.5, 0.5, 0.5) if 'mean' not in model.module.default_cfg else model.module.default_cfg['mean']
+    # std = (0.5, 0.5, 0.5) if 'std' not in model.module.default_cfg else model.module.default_cfg['std']
 
     # dataset_train, args.nb_classes = build_dataset(is_train=True, args=args)
     # create data loaders w/ augmentation pipeiine
@@ -422,7 +426,8 @@ def main(args):
     val_list = os.path.join(args.data_dir, val_list_name)
     val_augmentor = get_augmentor(False, args.input_size, mean, std, args.disable_scaleup,
                                   threed_data=args.threed_data, version=args.augmentor_ver,
-                                  scale_range=args.scale_range, num_clips=args.num_clips, num_crops=args.num_crops, dataset=args.dataset)
+                                  scale_range=args.scale_range, num_clips=args.num_clips, num_crops=args.num_crops,
+                                  dataset=args.dataset)
     dataset_val = video_data_cls(args.data_dir, val_list, args.duration, args.frames_per_group,
                                  num_clips=args.num_clips,
                                  modality=args.modality, image_tmpl=image_tmpl,
@@ -433,9 +438,9 @@ def main(args):
     data_loader_val = build_dataflow(dataset_val, is_train=False, batch_size=args.batch_size,
                                      workers=args.num_workers, is_distributed=args.distributed)
 
-
     if args.eval:
-        test_stats = evaluate(data_loader_val, model, device, num_tasks, distributed=True, amp=args.amp, num_crops=args.num_crops, num_clips=args.num_clips)
+        test_stats = evaluate(data_loader_val, model, device, num_tasks, distributed=True, amp=args.amp,
+                              num_crops=args.num_crops, num_clips=args.num_clips)
         print(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
         return
 
@@ -465,7 +470,7 @@ def main(args):
 
         test_stats = evaluate(data_loader_val, model, device, num_tasks, distributed=True, amp=args.amp)
         print(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
-    
+
         max_accuracy = max(max_accuracy, test_stats["acc1"])
         print(f'Max accuracy: {max_accuracy:.2f}%')
 
@@ -495,7 +500,6 @@ def main(args):
         if args.output_dir and utils.is_main_process():
             with (output_dir / "log.txt").open("a") as f:
                 f.write(json.dumps(log_stats) + "\n")
-
 
     total_time = time.time() - start_time
     total_time_str = str(datetime.timedelta(seconds=int(total_time)))
