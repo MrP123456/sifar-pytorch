@@ -48,7 +48,7 @@ def get_args_parser():
     parser.add_argument('--epochs', default=300, type=int)
 
     # Dataset parameters
-    parser.add_argument('--data_dir', type=str, metavar='DIR', help='path to dataset')
+    parser.add_argument('--data_dir', type=str, metavar='DIR', help='path to dataset', default='F:/dataset_dir')
     parser.add_argument('--dataset', default='st2stv2',
                         choices=list(DATASET_CONFIG.keys()), help='path to dataset file list')
     parser.add_argument('--duration', default=8, type=int, help='number of frames')
