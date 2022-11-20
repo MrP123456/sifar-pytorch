@@ -19,6 +19,7 @@ from timm.utils import accuracy, ModelEma, reduce_tensor
 import utils
 from losses import DeepMutualLoss, ONELoss, SelfDistillationLoss
 
+
 def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
                     data_loader: Iterable, optimizer: torch.optim.Optimizer,
                     device: torch.device, epoch: int, loss_scaler, max_norm: float = 0,
@@ -37,13 +38,14 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
         model.train(not finetune)
     else:
         model.train()
-    #criterion.train()
+    # criterion.train()
     metric_logger = utils.MetricLogger(delimiter="  ")
     metric_logger.add_meter('lr', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
     header = 'Epoch: [{}]'.format(epoch)
     print_freq = 50
 
     for samples, targets in metric_logger.log_every(data_loader, print_freq, header):
+        # print(samples.shape,targets.shape) [64, 24, 224, 224] [64]
 
         batch_size = targets.size(0)
         if simclr_criterion is not None or simsiam_criterion is not None or moco_criterion is not None or byol_criterion is not None:
@@ -71,10 +73,11 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
                 if batch_size == 1:
                     continue
                 if batch_size % 2 != 0:
-                     samples, targets = samples[:-1], targets[:-1]
+                    samples, targets = samples[:-1], targets[:-1]
                 samples, targets = mixup_fn(samples, targets)
 
         with torch.cuda.amp.autocast(enabled=amp):
+            print(samples.shape)
             outputs = model(samples)
             if simclr_criterion is not None:
                 # outputs 0: ce logits, bs x class, outputs 1: normalized embeddings of two views, bs x 2 x dim
@@ -175,13 +178,13 @@ def evaluate(data_loader, model, device, world_size, distributed=True, amp=False
         target = target.to(device, non_blocking=True)
         # compute output
         batch_size = images.shape[0]
-        #images = images.view((batch_size * num_crops * num_clips, -1) + images.size()[2:])
+        # images = images.view((batch_size * num_crops * num_clips, -1) + images.size()[2:])
         with torch.cuda.amp.autocast(enabled=amp):
             output = model(images)
-            #loss = criterion(output, target)
+            # loss = criterion(output, target)
         output = output.reshape(batch_size, num_crops * num_clips, -1).mean(dim=1)
-        #acc1, acc5 = accuracy(output, target, topk=(1, 5))
-        
+        # acc1, acc5 = accuracy(output, target, topk=(1, 5))
+
         if distributed:
             outputs.append(concat_all_gather(output))
             targets.append(concat_all_gather(target))
@@ -190,10 +193,9 @@ def evaluate(data_loader, model, device, world_size, distributed=True, amp=False
             targets.append(target)
 
         batch_size = images.shape[0]
-        #metric_logger.update(loss=reduced_loss.item())
-        #metric_logger.meters['acc1'].update(acc1.item(), n=batch_size)
-        #metric_logger.meters['acc5'].update(acc5.item(), n=batch_size)
-
+        # metric_logger.update(loss=reduced_loss.item())
+        # metric_logger.meters['acc1'].update(acc1.item(), n=batch_size)
+        # metric_logger.meters['acc5'].update(acc5.item(), n=batch_size)
 
     num_data = len(data_loader.dataset)
     outputs = torch.cat(outputs, dim=0)
@@ -205,7 +207,7 @@ def evaluate(data_loader, model, device, world_size, distributed=True, amp=False
         tmp = outputs[:num_data].cpu().numpy()
         tt = targets[:num_data].cpu().numpy()
         np.savez("con_mix.npz", pred=tmp, gt=tt)
-        
+
     real_acc1, real_acc5 = accuracy(outputs[:num_data], targets[:num_data], topk=(1, 5))
     real_loss = criterion(outputs, targets)
     metric_logger.update(loss=real_loss.item())
@@ -224,10 +226,10 @@ def concat_all_gather(tensor):
     *** Warning ***: torch.distributed.all_gather has no gradient.
     """
     tensors_gather = [torch.ones_like(tensor)
-        for _ in range(torch.distributed.get_world_size())]
+                      for _ in range(torch.distributed.get_world_size())]
     torch.distributed.all_gather(tensors_gather, tensor.contiguous(), async_op=False)
 
-    #output = torch.cat(tensors_gather, dim=0)
+    # output = torch.cat(tensors_gather, dim=0)
     if tensor.dim() == 1:
         output = rearrange(tensors_gather, 'n b -> (b n)')
     else:

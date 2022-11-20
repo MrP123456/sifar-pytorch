@@ -6,6 +6,8 @@
 #
 import argparse
 import datetime
+import sys
+
 import numpy as np
 import time
 import torch
@@ -213,7 +215,7 @@ def get_args_parser():
     parser.add_argument('--start_epoch', default=0, type=int, metavar='N',
                         help='start epoch')
     parser.add_argument('--eval', action='store_true', help='Perform evaluation only')
-    parser.add_argument('--num_workers', default=10, type=int)
+    parser.add_argument('--num_workers', default=0, type=int)
     parser.add_argument('--pin-mem', action='store_true',
                         help='Pin CPU memory in DataLoader for more efficient (sometimes) transfer to GPU.')
     parser.add_argument('--no-pin-mem', action='store_false', dest='pin_mem',
@@ -254,7 +256,6 @@ def get_args_parser():
 
 def main(args):
     utils.init_distributed_mode(args)
-    print(args)
     # Patch
     if not hasattr(args, 'hard_contrastive'):
         args.hard_contrastive = False

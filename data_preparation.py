@@ -14,11 +14,12 @@ def main(srcPath, desPath):
     for app in apps:
         srcPath_cmp_app = os.path.join(srcPath_cmp, app)
         types = os.listdir(srcPath_cmp_app)
-        for type in tqdm(types):
+        types = sorted(types)
+        for i, type in tqdm(enumerate(types)):
             srcPath_cmp_app_type = os.path.join(srcPath_cmp_app, type)
             names = os.listdir(srcPath_cmp_app_type)
-            for i, name in enumerate(names):
-                if i >= 10:
+            for j, name in enumerate(names):
+                if j >= 10:
                     break
                 srcPath_cmp_app_type_name = os.path.join(srcPath_cmp_app_type, name)
                 desPath_videos_name = os.path.join(desPath_videos, name)
@@ -38,7 +39,7 @@ def main(srcPath, desPath):
                 num_frames = len(os.listdir(desPath_videos_name))
                 folder_path = os.path.join('videos', name)
                 start_frame, end_frame = str(1), str(num_frames)
-                label_id = type
+                label_id = str(i)
                 str_img = folder_path + ' ' + start_frame + ' ' + end_frame + ' ' + label_id
                 if app == 'train_256':
                     train_list.append(str_img)
