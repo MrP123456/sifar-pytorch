@@ -419,10 +419,12 @@ def main(args):
                                    dense_sampling=args.dense_sampling,
                                    transform=train_augmentor, is_train=True, test_mode=False,
                                    seperator=filename_seperator, filter_video=filter_video)
-
     num_tasks = utils.get_world_size()
     data_loader_train = build_dataflow(dataset_train, is_train=True, batch_size=args.batch_size,
                                        workers=args.num_workers, is_distributed=args.distributed)
+    for x,y in data_loader_train:
+        print(x.shape)
+        sys.exit(0)
 
     val_list = os.path.join(args.data_dir, val_list_name)
     val_augmentor = get_augmentor(False, args.input_size, mean, std, args.disable_scaleup,

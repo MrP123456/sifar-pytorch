@@ -8,14 +8,14 @@ import torch.utils.data
 import torch.utils.data.distributed
 import torchvision.transforms as transforms
 from video_transforms import (GroupRandomHorizontalFlip, GroupOverSample,
-                               GroupMultiScaleCrop, GroupScale, GroupCenterCrop, GroupRandomCrop,
-                               GroupNormalize, Stack, ToTorchFormatTensor, GroupRandomScale)
+                              GroupMultiScaleCrop, GroupScale, GroupCenterCrop, GroupRandomCrop,
+                              GroupNormalize, Stack, ToTorchFormatTensor, GroupRandomScale)
+
 
 def get_augmentor(is_train: bool, image_size: int, mean: List[float] = None,
                   std: List[float] = None, disable_scaleup: bool = False,
                   threed_data: bool = False, version: str = 'v1', scale_range: [int] = None,
                   modality: str = 'rgb', num_clips: int = 1, num_crops: int = 1, dataset: str = ''):
-
     mean = [0.485, 0.456, 0.406] if mean is None else mean
     std = [0.229, 0.224, 0.225] if std is None else std
     scale_range = [256, 320] if scale_range is None else scale_range
@@ -73,4 +73,3 @@ def build_dataflow(dataset, is_train, batch_size, workers=36, is_distributed=Fal
                                               num_workers=workers, pin_memory=True, sampler=sampler)
 
     return data_loader
-
