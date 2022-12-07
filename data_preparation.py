@@ -24,7 +24,7 @@ def main(srcPath, desPath):
                 srcPath_cmp_app_type_name = os.path.join(srcPath_cmp_app_type, name)
                 desPath_videos_name = os.path.join(desPath_videos, name)
                 os.makedirs(desPath_videos_name, exist_ok=True)
-                '''video = cv2.VideoCapture(srcPath_cmp_app_type_name)
+                video = cv2.VideoCapture(srcPath_cmp_app_type_name)
                 ret, frame = video.read()
                 cnt = 1
                 while ret:
@@ -33,7 +33,7 @@ def main(srcPath, desPath):
                     save_path = os.path.join(desPath_videos_name, '{:05d}.jpg'.format(cnt))
                     cnt += 1
                     cv2.imwrite(save_path, frame)
-                    ret, frame = video.read()'''
+                    ret, frame = video.read()
 
                 # folder_path, start_frame, end_frame, label_id
                 num_frames = len(os.listdir(desPath_videos_name))
